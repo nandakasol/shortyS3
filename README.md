@@ -1,14 +1,12 @@
-# Shorty
+# ShortyS3
 
-Shorty is a simple URL shortener for PHP.
+ShortyS3 is a simple URL shortener for PHP. Uses AWS s3 instead of a database.
 
 ## Installation
 
 1\. Download and extract the files to your web directory.
 
-2\. Use the included `database.sql` file to create a table to hold your URLs.
-
-3\. Configure your webserver.
+2\. Configure your webserver.
 
 For **Apache**, edit your `.htaccess` file with the following:
 
@@ -25,7 +23,7 @@ For **Nginx**, add the following to your server declaration:
         }
     }
 
-4\. Edit the `config.php` file.
+3\. Edit the `config.php` file.
 
 ## Generating short URLs
 
@@ -55,9 +53,9 @@ certain IP addresses, use the `allow` function:
 
 ## Requirements
 
-* PHP 5.1+
-* PDO extension
+* PHP 5.5+
+* AWS SDK for PHP
 
 ## License
 
-Shorty is licensed under the [MIT](https://github.com/mikecao/shorty/blob/master/LICENSE) license.
+ShortyS3 is licensed under the [MIT](https://github.com/nandakasol/shortyS3/blob/master/LICENSE) license.
