@@ -7,7 +7,7 @@ require 'vendor/autoload.php';
  * @copyright Copyright (c) 2011, Mike Cao <mike@mikecao.com>
  * @license   MIT, http://www.opensource.org/licenses/mit-license.php
  */
-class Shorty {
+class ShortyS3 {
     /**
      * Default characters to use for shortening.
      *
@@ -222,12 +222,12 @@ class Shorty {
         $lastIncrement = file_get_contents("s3://{$this->bucket}/lastIncrement");
 
         if(!$lastIncrement) {
-          file_put_contents("s3://{$bucket}/lastIncrement", 1);
+          file_put_contents("s3://{$this->bucket}/lastIncrement", 1);
           return 1;
         }
 
         $lastIncrement++;
-        file_put_contents("s3://{$bucket}/lastIncrement", $lastIncrement);
+        file_put_contents("s3://{$this->bucket}/lastIncrement", $lastIncrement);
 
 	return $lastIncrement;
     }
@@ -239,7 +239,7 @@ class Shorty {
      * @return array URL record
      */
     public function fetch($id) {
-        return file_get_contents("s3://{$this->bucket}/ids/{$id}");
+        return json_decode(file_get_contents("s3://{$this->bucket}/ids/{$id}"));
     }
 
     /**
@@ -249,7 +249,8 @@ class Shorty {
      * @return array URL record
      */
     public function find($url) {
-        return file_get_contents("s3://{$this->bucket}/urls/{$url}");
+        $urlSafe = base64_encode($url);
+        return json_decode(file_get_contents("s3://{$this->bucket}/urls/{$urlSafe}"));
     }
 
     /**
@@ -264,9 +265,10 @@ class Shorty {
         $datetime = date('Y-m-d H:i:s');
         $idData = array('url'=>$url,'datetime'=>$datetime, 'params'=>$params, 'hits'=>0);
         $urlData = array('id'=>$id);
+        $urlSafe = base64_encode($url);
 
-        file_put_contents("s3://{$bucket}/ids/{$id}", json_encode($idData));
-        file_put_contents("s3://{$bucket}/urls/{$url}", json_encode($urlData));
+        file_put_contents("s3://{$this->bucket}/ids/{$id}", json_encode($idData));
+        file_put_contents("s3://{$this->bucket}/urls/{$urlSafe}", json_encode($urlData));
 
 	return $id;
     }
@@ -277,12 +279,12 @@ class Shorty {
      * @param int $id URL id
      */
     public function update($id) {
-        $idData =  file_get_contents("s3://{$this->bucket}/ids/{$id}");
+        $idData =  json_decode(file_get_contents("s3://{$this->bucket}/ids/{$id}"));
 
-	$idData['datetime'] = date('Y-m-d H:i:s');
-	$idData['hits'] += 1;
+	$idData->datetime = date('Y-m-d H:i:s');
+	$idData->hits += 1;
 
-        file_put_contents("s3://{$bucket}/ids/{$id}", json_encode($idData));
+        file_put_contents("s3://{$this->bucket}/ids/{$id}", json_encode($idData));
     }
 
     /**
@@ -333,7 +335,7 @@ class Shorty {
      * Starts the program.
      */
     public function run() {
-        $q = str_replace('/', '', $_GET['q']);
+        if(isset($_GET['q'])) $q = str_replace('/', '', $_GET['q']);
 
         $url = '';
         if (isset($_GET['url'])) {
@@ -406,7 +408,7 @@ class Shorty {
                 if (!empty($result)) {
                     $this->update($id);
 
-                    $this->redirect($result['url']);
+                    $this->redirect($result->url);
                 }
                 else {
                     $this->not_found();
