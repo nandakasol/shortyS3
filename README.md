@@ -1,5 +1,5 @@
 # ShortyS3
-
+WORK IN PROGRESS - Do Not Use Yet
 ShortyS3 is a simple URL shortener for PHP. Uses AWS s3 instead of a database.
 
 ## Installation
