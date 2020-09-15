@@ -2,8 +2,22 @@
 // Hostname for your URL shortener
 $hostname = 'http://example.com';
 
-// PDO connection to the database
-$connection = new PDO('mysql:dbname=shorty;host=localhost', 'user', 'password');
+/* S3 config
+ If you instantiate a new client for Amazon Simple Storage Service (S3) with
+ no credentials, the AWS SDK for PHP will look for access keys
+ in the following order: environment variables, ~/.aws/credentials file, then finally
+ IAM Roles for Amazon EC2 Instances. The first set of credentials the SDK is able
+ to find will be used to instantiate the client.
+ For more information about this interface to Amazon S3, see:
+ http://docs.aws.amazon.com/aws-sdk-php/v3/guide/getting-started/basic-usage.html#creating-a-client
+*/
+$s3config = array(
+  'region' => '-- your region --',
+  'version' => 'latest'
+);
+
+// S3 bucket
+$bucket = 'bucket-name';
 
 // Choose your character set (default)
 $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -23,7 +37,7 @@ $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 // If you want your generated URLs to even harder to guess, you can set
 // the salt value below to any non empty value. This is especially useful for
 // encoding consecutive numbers.
-$salt = '';
+$salt = 'somesalt';
 
 // The padding length to use when the salt value is configured above.
 // The default value is 3.

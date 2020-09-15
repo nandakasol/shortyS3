@@ -1,0 +1,15 @@
+{
+    "name": "nandakasol/shortys3",
+    "description": "ShortyS3 is a simple URL shortener for PHP. Uses AWS s3 instead of a database.",
+    "type": "project",
+    "require": {
+        "aws/aws-sdk-php": "^3.154"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Dinesh Copoosamy",
+            "email": "dinesh@nandaka.co.za"
+        }
+    ]
+}

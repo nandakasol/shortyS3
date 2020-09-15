@@ -1,8 +1,8 @@
 <?php
-require './shorty.php';
+require './shortyS3.php';
 require './config.php';
 
-$shorty = new Shorty($hostname, $connection);
+$shorty = new ShortyS3($hostname, $s3config, $bucket);
 
 $shorty->set_chars($chars);
 $shorty->set_salt($salt);

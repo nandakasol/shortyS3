@@ -31,11 +31,16 @@ class Shorty {
     private $hostname = '';
 
     /**
-     * PDO database connection.
+     * S3 client.
      *
      * @var object
      */
-    private $connection = null;
+    private $s3 = null;
+
+    /**
+     * Bucket
+     */
+    private $bucket = '';
 
     /**
      * Whitelist of IPs allowed to save URLs.
@@ -49,11 +54,14 @@ class Shorty {
      * Constructor
      *
      * @param string $hostname Hostname
-     * @param object $connection Database connection
+     * @param array $s3config S3 configuration
+     * @param string $bucket S3 bucket name
      */
-    public function __construct($hostname, $connection) {
+    public function __construct($hostname, $s3config, $bucket) {
         $this->hostname = $hostname;
-        $this->connection = $connection;
+        $this->s3 = new Aws\S3\S3Client($s3config);
+        $s3->registerStreamWrapper();
+        $this->bucket = $bucket;
     }
 
     /**
@@ -203,50 +211,62 @@ class Shorty {
     }
 
     /**
-     * Looks up a URL in the database by id.
+     * Looks up a URL from s3 bucket.
+     *
+     * @param string $id URL id
+     * @return array URL record
+     */
+    public function generateId() {
+        $lastIncrement = file_get_contents("s3://{$this->bucket}/lastIncrement");
+
+        if(!$lastIncrement) {
+          file_put_contents("s3://{$bucket}/lastIncrement", 1);
+          return 1;
+        }
+
+        $lastIncrement++;
+        file_put_contents("s3://{$bucket}/lastIncrement", $lastIncrement);
+
+	return $lastIncrement;
+    }
+
+    /**
+     * Looks up a URL from s3 bucket.
      *
      * @param string $id URL id
      * @return array URL record
      */
     public function fetch($id) {
-        $statement = $this->connection->prepare(
-            'SELECT * FROM urls WHERE id = ?'
-        );
-        $statement->execute(array($id));
-
-        return $statement->fetch(PDO::FETCH_ASSOC);
+        return file_get_contents("s3://{$this->bucket}/ids/{$id}");
     }
 
     /**
-     * Attempts to locate a URL in the database.
+     * Attempts to locate a URL in bucket.
      *
      * @param string $url URL
      * @return array URL record
      */
     public function find($url) {
-        $statement = $this->connection->prepare(
-            'SELECT * FROM urls WHERE url = ?'
-        );
-        $statement->execute(array($url));
-
-        return $statement->fetch(PDO::FETCH_ASSOC);
+        return file_get_contents("s3://{$this->bucket}/urls/{$url}");
     }
 
     /**
      * Stores a URL in the database.
      *
      * @param string $url URL to store
+     * @param array $params Parameters
      * @return int Insert id
      */
-    public function store($url) {
+    public function store($url, $params=array()) {
+        $id = $this->generateId();
         $datetime = date('Y-m-d H:i:s');
+        $idData = array('url'=>$url,'datetime'=>$datetime, 'params'=>$params, 'hits'=>0);
+        $urlData = array('id'=>$id);
 
-        $statement = $this->connection->prepare(
-            'INSERT INTO urls (url, created) VALUES (?,?)'
-        );
-        $statement->execute(array($url, $datetime));
+        file_put_contents("s3://{$bucket}/ids/{$id}", json_encode($idData));
+        file_put_contents("s3://{$bucket}/urls/{$url}", json_encode($urlData));
 
-        return $this->connection->lastInsertId();
+	return $id;
     }
 
     /**
@@ -255,12 +275,12 @@ class Shorty {
      * @param int $id URL id
      */
     public function update($id) {
-        $datetime = date('Y-m-d H:i:s');
+        $idData =  file_get_contents("s3://{$this->bucket}/ids/{$id}");
 
-        $statement = $this->connection->prepare(
-            'UPDATE urls SET hits = hits + 1, accessed = ? WHERE id = ?'
-        );
-        $statement->execute(array($datetime, $id));
+	$idData['datetime'] = date('Y-m-d H:i:s');
+	$idData['hits'] += 1;
+
+        file_put_contents("s3://{$bucket}/ids/{$id}", json_encode($idData));
     }
 
     /**
