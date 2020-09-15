@@ -1,4 +1,6 @@
 <?php
+require 'vendor/autoload.php';
+
 /**
  * Shorty: A simple URL shortener.
  *
@@ -60,7 +62,7 @@ class Shorty {
     public function __construct($hostname, $s3config, $bucket) {
         $this->hostname = $hostname;
         $this->s3 = new Aws\S3\S3Client($s3config);
-        $s3->registerStreamWrapper();
+        $this->s3->registerStreamWrapper();
         $this->bucket = $bucket;
     }
 
